@@ -61,6 +61,7 @@ interface SummaryCardsProps {
 function ScenarioCard({
   scenario,
   isWinner,
+  percentFromBest,
   ringClass,
   glowClass,
   icon,
@@ -68,6 +69,7 @@ function ScenarioCard({
 }: {
   scenario: ScenarioResult;
   isWinner: boolean;
+  percentFromBest: number;
   ringClass: string;
   glowClass: string;
   icon: string;
@@ -82,9 +84,13 @@ function ScenarioCard({
         isWinner && glowClass
       )}
     >
-      {isWinner && (
+      {isWinner ? (
         <div className="absolute top-0 right-0 rounded-bl-lg bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
           MELHOR
+        </div>
+      ) : (
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-destructive/90 px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
+          {percentFromBest.toFixed(1)}%
         </div>
       )}
 
@@ -139,33 +145,37 @@ function ScenarioCard({
   );
 }
 
+const CARD_META: Record<string, { ringClass: string; glowClass: string; icon: string }> = {
+  ALUGAR: { ringClass: "ring-scenario-rent", glowClass: "glass-card-glow-rent", icon: "🏠" },
+  COMPRAR_VISTA: { ringClass: "ring-scenario-buy", glowClass: "glass-card-glow-buy", icon: "💰" },
+  FINANCIAR: { ringClass: "ring-scenario-finance", glowClass: "glass-card-glow-finance", icon: "🏦" },
+};
+
 export function SummaryCards({ results, showRealValues }: SummaryCardsProps) {
+  const key = showRealValues ? "finalWealthReal" : "finalWealth";
+
+  const scenarios = [results.rent, results.buyCash, results.finance];
+  const sorted = [...scenarios].sort((a, b) => b[key] - a[key]);
+  const bestWealth = sorted[0][key];
+
   return (
     <div className="space-y-4">
-      <ScenarioCard
-        scenario={results.rent}
-        isWinner={results.winner === "ALUGAR"}
-        ringClass="ring-scenario-rent"
-        glowClass="glass-card-glow-rent"
-        icon="🏠"
-        showRealValues={showRealValues}
-      />
-      <ScenarioCard
-        scenario={results.buyCash}
-        isWinner={results.winner === "COMPRAR_VISTA"}
-        ringClass="ring-scenario-buy"
-        glowClass="glass-card-glow-buy"
-        icon="💰"
-        showRealValues={showRealValues}
-      />
-      <ScenarioCard
-        scenario={results.finance}
-        isWinner={results.winner === "FINANCIAR"}
-        ringClass="ring-scenario-finance"
-        glowClass="glass-card-glow-finance"
-        icon="🏦"
-        showRealValues={showRealValues}
-      />
+      {sorted.map((scenario) => {
+        const meta = CARD_META[scenario.name];
+        const pct = bestWealth !== 0 ? ((scenario[key] - bestWealth) / bestWealth) * 100 : 0;
+        return (
+          <ScenarioCard
+            key={scenario.name}
+            scenario={scenario}
+            isWinner={scenario.name === results.winner}
+            percentFromBest={pct}
+            ringClass={meta.ringClass}
+            glowClass={meta.glowClass}
+            icon={meta.icon}
+            showRealValues={showRealValues}
+          />
+        );
+      })}
     </div>
   );
 }

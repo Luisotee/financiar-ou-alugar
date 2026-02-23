@@ -36,7 +36,6 @@ export function calculateBuyCashScenario(
   // If never reached target, return savings-only result
   if (remainingMonths <= 0) {
     const last = savingsResult.snapshots[savingsResult.snapshots.length - 1];
-    const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
     return {
       name: "COMPRAR_VISTA",
@@ -46,9 +45,9 @@ export function calculateBuyCashScenario(
       finalWealth: last.totalWealth,
       finalWealthReal: last.totalWealthReal,
       totalSpent: last.totalSpent,
-      totalSpentReal: last.totalSpent / deflator,
+      totalSpentReal: last.totalSpentReal,
       effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
-      effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+      effectiveMonthlyAvgCostReal: last.totalSpentReal / totalMonths,
       totalInterestPaid: 0,
       upfrontCost: 0,
       savingsPhaseMonths: savingsMonths,
@@ -71,6 +70,8 @@ export function calculateBuyCashScenario(
   let currentIptuAnnual = inputs.propertyValue * inputs.iptuRate;
   let currentBudget = monthlyBudget;
   let totalSpent = savingsResult.totalRentPaid + upfrontCost;
+  const upfrontDeflator = Math.pow(1 + inputs.ipcaRate / 12, savingsMonths);
+  let totalSpentReal = savingsResult.totalSpentReal + upfrontCost / upfrontDeflator;
 
   // Advance budget/costs to the year of purchase
   const yearsElapsed = Math.floor(savingsMonths / 12);
@@ -121,6 +122,7 @@ export function calculateBuyCashScenario(
     const netInvestment = netInvestmentValue(investment);
     const netWealth = currentPropertyValue - capitalGainsTax + netInvestment;
     const deflator = Math.pow(1 + inputs.ipcaRate / 12, absoluteMonth);
+    totalSpentReal += monthlyCost / deflator;
 
     ownershipSnapshots.push({
       month: absoluteMonth,
@@ -139,13 +141,13 @@ export function calculateBuyCashScenario(
       totalWealth: netWealth,
       totalSpent,
       totalWealthReal: netWealth / deflator,
+      totalSpentReal,
     });
   }
 
   // Compose: savings snapshots + ownership snapshots
   const allSnapshots = [...savingsResult.snapshots, ...ownershipSnapshots];
   const last = allSnapshots[allSnapshots.length - 1];
-  const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
   return {
     name: "COMPRAR_VISTA",
@@ -155,9 +157,9 @@ export function calculateBuyCashScenario(
     finalWealth: last.totalWealth,
     finalWealthReal: last.totalWealthReal,
     totalSpent: last.totalSpent,
-    totalSpentReal: last.totalSpent / deflator,
+    totalSpentReal: last.totalSpentReal,
     effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
-    effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+    effectiveMonthlyAvgCostReal: last.totalSpentReal / totalMonths,
     totalInterestPaid: 0,
     upfrontCost,
     savingsPhaseMonths: savingsMonths,

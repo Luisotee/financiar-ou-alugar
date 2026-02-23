@@ -45,7 +45,6 @@ export function calculateFinanceScenario(
   // If never reached target, return savings-only result
   if (remainingMonths <= 0) {
     const last = savingsResult.snapshots[savingsResult.snapshots.length - 1];
-    const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
     return {
       name: "FINANCIAR",
@@ -55,9 +54,9 @@ export function calculateFinanceScenario(
       finalWealth: last.totalWealth,
       finalWealthReal: last.totalWealthReal,
       totalSpent: last.totalSpent,
-      totalSpentReal: last.totalSpent / deflator,
+      totalSpentReal: last.totalSpentReal,
       effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
-      effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+      effectiveMonthlyAvgCostReal: last.totalSpentReal / totalMonths,
       totalInterestPaid: 0,
       upfrontCost: 0,
       savingsPhaseMonths: savingsMonths,
@@ -102,6 +101,8 @@ export function calculateFinanceScenario(
   let currentIptu = inputs.propertyValue * inputs.iptuRate;
   let currentBudget = monthlyBudget;
   let totalSpent = savingsResult.totalRentPaid + upfrontTotal;
+  const upfrontDeflator = Math.pow(1 + inputs.ipcaRate / 12, savingsMonths);
+  let totalSpentReal = savingsResult.totalSpentReal + upfrontTotal / upfrontDeflator;
 
   // Advance budget/costs to the year of purchase
   const yearsElapsed = Math.floor(savingsMonths / 12);
@@ -161,6 +162,7 @@ export function calculateFinanceScenario(
     const netWealth =
       currentPropertyValue - outstandingDebt - capitalGainsTax + netInvestment;
     const deflator = Math.pow(1 + inputs.ipcaRate / 12, absoluteMonth);
+    totalSpentReal += totalMonthlyOutflow / deflator;
 
     financingSnapshots.push({
       month: absoluteMonth,
@@ -179,13 +181,13 @@ export function calculateFinanceScenario(
       totalWealth: netWealth,
       totalSpent,
       totalWealthReal: netWealth / deflator,
+      totalSpentReal,
     });
   }
 
   // Compose: savings snapshots + financing snapshots
   const allSnapshots = [...savingsResult.snapshots, ...financingSnapshots];
   const last = allSnapshots[allSnapshots.length - 1];
-  const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
   // Only count interest from amortization rows actually used
   const usedScheduleMonths = Math.min(remainingMonths, financingMonths);
@@ -201,9 +203,9 @@ export function calculateFinanceScenario(
     finalWealth: last.totalWealth,
     finalWealthReal: last.totalWealthReal,
     totalSpent: last.totalSpent,
-    totalSpentReal: last.totalSpent / deflator,
+    totalSpentReal: last.totalSpentReal,
     effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
-    effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+    effectiveMonthlyAvgCostReal: last.totalSpentReal / totalMonths,
     totalInterestPaid,
     upfrontCost: upfrontTotal,
     savingsPhaseMonths: savingsMonths,

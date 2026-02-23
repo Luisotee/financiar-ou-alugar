@@ -58,7 +58,7 @@ function scenarioYearlyTable(
       String(snap.year),
       formatBRLCompact(d(monthlyCost)),
       formatBRLCompact(d(snap.investmentContribution)),
-      formatBRLCompact(d(snap.totalSpent)),
+      formatBRLCompact(showRealValues ? snap.totalSpentReal : snap.totalSpent),
       formatBRLCompact(d(snap.investmentBalance)),
     ];
     if (!isRent) cells.push(formatBRLCompact(d(snap.propertyValue)));
@@ -108,7 +108,7 @@ export function exportMarkdown(
   lines.push(`## Resultado`);
   lines.push("");
   lines.push(
-    `**${results.winnerLabel}** é a melhor opção, gerando **${formatBRL(results.advantage)}** a mais em patrimônio.`
+    `**${results.winnerLabel}** é a melhor opção, gerando **${formatBRL(results.advantage)}** (+${results.advantagePercent.toFixed(1)}%) a mais em patrimônio.`
   );
   lines.push("");
 

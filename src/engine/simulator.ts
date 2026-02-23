@@ -29,6 +29,8 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
   const sorted = [...scenarios].sort((a, b) => b.result[key] - a.result[key]);
   const winner = sorted[0].name;
   const advantage = sorted[0].result[key] - sorted[1].result[key];
+  const runnerUpWealth = sorted[1].result[key];
+  const advantagePercent = runnerUpWealth > 0 ? (advantage / runnerUpWealth) * 100 : 0;
 
   // Build chart data (yearly snapshots)
   const chartData: ChartDataPoint[] = [];
@@ -62,6 +64,7 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
     winner,
     winnerLabel: LABELS[winner],
     advantage,
+    advantagePercent,
     chartData,
     startingCapital,
     monthlyBudget,

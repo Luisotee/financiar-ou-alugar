@@ -86,6 +86,7 @@ export interface MonthlySnapshot {
   totalWealth: number;
   totalSpent: number;
   totalWealthReal: number;
+  totalSpentReal: number;
 }
 
 export interface ScenarioResult {
@@ -111,6 +112,7 @@ export interface SimulationResults {
   winner: "ALUGAR" | "COMPRAR_VISTA" | "FINANCIAR";
   winnerLabel: string;
   advantage: number;
+  advantagePercent: number;
   chartData: ChartDataPoint[];
   startingCapital: number;
   monthlyBudget: number;

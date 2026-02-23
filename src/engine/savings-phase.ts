@@ -6,6 +6,7 @@ export interface SavingsPhaseResult {
   finalInvestment: InvestmentState;
   snapshots: MonthlySnapshot[];
   totalRentPaid: number;
+  totalSpentReal: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export function calculateSavingsPhase(
       },
       snapshots: [],
       totalRentPaid: 0,
+      totalSpentReal: 0,
     };
   }
 
@@ -48,6 +50,7 @@ export function calculateSavingsPhase(
   let budget = monthlyBudget;
   let totalRentPaid = 0;
   let totalSpent = 0;
+  let totalSpentReal = 0;
   const snapshots: MonthlySnapshot[] = [];
 
   for (let m = 1; m <= maxMonths; m++) {
@@ -66,6 +69,7 @@ export function calculateSavingsPhase(
 
     const netWealth = netInvestmentValue(investment);
     const deflator = Math.pow(1 + ipcaRate / 12, m);
+    totalSpentReal += rent / deflator;
 
     snapshots.push({
       month: m,
@@ -84,6 +88,7 @@ export function calculateSavingsPhase(
       totalWealth: netWealth,
       totalSpent,
       totalWealthReal: netWealth / deflator,
+      totalSpentReal,
     });
 
     // Check if target reached
@@ -93,6 +98,7 @@ export function calculateSavingsPhase(
         finalInvestment: investment,
         snapshots,
         totalRentPaid,
+        totalSpentReal,
       };
     }
   }
@@ -103,5 +109,6 @@ export function calculateSavingsPhase(
     finalInvestment: investment,
     snapshots,
     totalRentPaid,
+    totalSpentReal,
   };
 }

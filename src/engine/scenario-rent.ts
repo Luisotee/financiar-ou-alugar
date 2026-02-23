@@ -20,6 +20,7 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
   let currentIptu = inputs.propertyValue * inputs.iptuRate;
   let currentBudget = monthlyBudget;
   let totalSpent = 0;
+  let totalSpentReal = 0;
   const snapshots: MonthlySnapshot[] = [];
 
   for (let m = 1; m <= totalMonths; m++) {
@@ -46,6 +47,7 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
 
     const netWealth = netInvestmentValue(investment);
     const deflator = Math.pow(1 + inputs.ipcaRate / 12, m);
+    totalSpentReal += monthlyCost / deflator;
 
     snapshots.push({
       month: m,
@@ -64,11 +66,11 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
       totalWealth: netWealth,
       totalSpent,
       totalWealthReal: netWealth / deflator,
+      totalSpentReal,
     });
   }
 
   const last = snapshots[snapshots.length - 1];
-  const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
   return {
     name: "ALUGAR",
@@ -78,9 +80,9 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
     finalWealth: last.totalWealth,
     finalWealthReal: last.totalWealthReal,
     totalSpent: last.totalSpent,
-    totalSpentReal: last.totalSpent / deflator,
+    totalSpentReal: last.totalSpentReal,
     effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
-    effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+    effectiveMonthlyAvgCostReal: last.totalSpentReal / totalMonths,
     totalInterestPaid: 0,
     upfrontCost: 0,
     savingsPhaseMonths: 0,

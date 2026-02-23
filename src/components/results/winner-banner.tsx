@@ -9,7 +9,7 @@ interface WinnerBannerProps {
 }
 
 export function WinnerBanner({ results }: WinnerBannerProps) {
-  const { winnerLabel, advantage, winner } = results;
+  const { winnerLabel, advantage, advantagePercent, winner } = results;
 
   const glowClass =
     winner === "ALUGAR"
@@ -23,7 +23,8 @@ export function WinnerBanner({ results }: WinnerBannerProps) {
       <p className="text-center text-sm sm:text-base">
         Com base nos parâmetros informados,{" "}
         <span className="font-bold">{winnerLabel}</span> gera{" "}
-        <span className="font-bold">{formatBRL(advantage)}</span> a mais em
+        <span className="font-bold">{formatBRL(advantage)}</span>{" "}
+        <span className="text-muted-foreground">(+{advantagePercent.toFixed(1)}%)</span> a mais em
         patrimônio.
       </p>
     </div>
