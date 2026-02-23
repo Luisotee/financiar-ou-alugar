@@ -20,6 +20,7 @@ export function ResultsPanel({ results, showRealValues }: ResultsPanelProps) {
       <CapitalContextBanner
         startingCapital={results.startingCapital}
         monthlyBudget={results.monthlyBudget}
+        monthlySavings={results.monthlySavings}
       />
       <SummaryCards results={results} showRealValues={showRealValues} />
       <WealthChart results={results} showRealValues={showRealValues} />

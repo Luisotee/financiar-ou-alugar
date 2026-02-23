@@ -2,6 +2,7 @@
 
 import type { SimulationResults } from "@/engine/types";
 import { formatBRL } from "@/engine/formatters";
+import { cn } from "@/lib/utils";
 
 interface WinnerBannerProps {
   results: SimulationResults;
@@ -10,17 +11,15 @@ interface WinnerBannerProps {
 export function WinnerBanner({ results }: WinnerBannerProps) {
   const { winnerLabel, advantage, winner } = results;
 
-  const colorClass =
+  const glowClass =
     winner === "ALUGAR"
-      ? "from-scenario-rent/20 to-transparent border-scenario-rent/30"
+      ? "glass-card-glow-rent"
       : winner === "COMPRAR_VISTA"
-        ? "from-scenario-buy/20 to-transparent border-scenario-buy/30"
-        : "from-scenario-finance/20 to-transparent border-scenario-finance/30";
+        ? "glass-card-glow-buy"
+        : "glass-card-glow-finance";
 
   return (
-    <div
-      className={`rounded-xl border bg-gradient-to-r p-4 ${colorClass}`}
-    >
+    <div className={cn("glass-card winner-shimmer p-5", glowClass)}>
       <p className="text-center text-sm sm:text-base">
         Com base nos parâmetros informados,{" "}
         <span className="font-bold">{winnerLabel}</span> gera{" "}

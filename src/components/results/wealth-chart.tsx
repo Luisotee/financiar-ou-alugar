@@ -7,8 +7,6 @@ import {
   CartesianGrid,
   Area,
   AreaChart,
-  BarChart,
-  Bar,
 } from "recharts";
 import {
   ChartContainer,
@@ -18,7 +16,6 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { SimulationResults, ScenarioResult } from "@/engine/types";
 import { formatBRLCompact } from "@/engine/formatters";
@@ -64,7 +61,7 @@ function formatTooltipValue(value: number) {
 
 function WealthAreaChart({ data }: { data: SimulationResults["chartData"] }) {
   return (
-    <ChartContainer config={wealthConfig} className="h-[350px] w-full">
+    <ChartContainer config={wealthConfig} className="h-[420px] w-full">
       <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
         <defs>
           <linearGradient id="fillAlugar" x1="0" y1="0" x2="0" y2="1">
@@ -204,7 +201,7 @@ function CompositionChart({
         </button>
       </div>
 
-      <ChartContainer config={compositionConfig} className="h-[350px] w-full">
+      <ChartContainer config={compositionConfig} className="h-[420px] w-full">
         <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
           <defs>
             <linearGradient id="fillInvestment" x1="0" y1="0" x2="0" y2="1">
@@ -266,24 +263,20 @@ function CompositionChart({
 
 export function WealthChart({ results, showRealValues }: WealthChartProps) {
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Evolução Patrimonial</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="total">
-          <TabsList className="mb-3">
-            <TabsTrigger value="total">Patrimônio Total</TabsTrigger>
-            <TabsTrigger value="composition">Composição</TabsTrigger>
-          </TabsList>
-          <TabsContent value="total">
-            <WealthAreaChart data={results.chartData} />
-          </TabsContent>
-          <TabsContent value="composition">
-            <CompositionChart results={results} showRealValues={showRealValues} />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="glass-card p-5">
+      <h3 className="mb-3 text-lg font-semibold">Evolução Patrimonial</h3>
+      <Tabs defaultValue="total">
+        <TabsList className="mb-3">
+          <TabsTrigger value="total">Patrimônio Total</TabsTrigger>
+          <TabsTrigger value="composition">Composição</TabsTrigger>
+        </TabsList>
+        <TabsContent value="total">
+          <WealthAreaChart data={results.chartData} />
+        </TabsContent>
+        <TabsContent value="composition">
+          <CompositionChart results={results} showRealValues={showRealValues} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

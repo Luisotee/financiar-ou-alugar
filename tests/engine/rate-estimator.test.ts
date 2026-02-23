@@ -9,7 +9,7 @@ describe("estimateFinancingRate", () => {
       employmentType: "CLT",
       isFirstProperty: true,
     });
-    expect(result.rate).toBe(0.0425);
+    expect(result.rate).toBe(0.05);
     expect(result.description).toContain("MCMV");
   });
 
@@ -20,7 +20,7 @@ describe("estimateFinancingRate", () => {
       employmentType: "CLT",
       isFirstProperty: true,
     });
-    expect(result.rate).toBe(0.06);
+    expect(result.rate).toBe(0.0816);
     expect(result.description).toContain("MCMV");
   });
 
@@ -31,14 +31,25 @@ describe("estimateFinancingRate", () => {
       employmentType: "CLT",
       isFirstProperty: true,
     });
-    expect(result.rate).toBe(0.0766);
+    expect(result.rate).toBe(0.1025);
+    expect(result.description).toContain("MCMV");
+  });
+
+  it("returns MCMV Faixa 4 for higher income and eligible property", () => {
+    const result = estimateFinancingRate({
+      monthlyIncome: 10_000,
+      propertyValue: 400_000,
+      employmentType: "CLT",
+      isFirstProperty: true,
+    });
+    expect(result.rate).toBe(0.105);
     expect(result.description).toContain("MCMV");
   });
 
   it("does not qualify for MCMV if property too expensive", () => {
     const result = estimateFinancingRate({
       monthlyIncome: 5_000,
-      propertyValue: 500_000,
+      propertyValue: 600_000,
       employmentType: "CLT",
       isFirstProperty: true,
     });
@@ -63,20 +74,20 @@ describe("estimateFinancingRate", () => {
       employmentType: "CLT",
       isFirstProperty: true,
     });
-    // Base 10.5% - CLT 0.5% - 1st property 0.5% = 9.5%
-    expect(result.rate).toBeCloseTo(0.095);
+    // Base 11% - CLT 0.5% - 1st property 0.5% = 10%
+    expect(result.rate).toBeCloseTo(0.10);
     expect(result.description).toContain("CLT");
     expect(result.description).toContain("1ª casa");
   });
 
-  it("applies PJ premium", () => {
+  it("applies PJ base rate", () => {
     const result = estimateFinancingRate({
       monthlyIncome: 15_000,
       propertyValue: 500_000,
       employmentType: "PJ",
       isFirstProperty: false,
     });
-    // Base 10.5% + PJ 0.5% = 11%
+    // Base 11% (no PJ premium) = 11%
     expect(result.rate).toBeCloseTo(0.11);
     expect(result.description).toContain("PJ");
   });
@@ -88,7 +99,18 @@ describe("estimateFinancingRate", () => {
       employmentType: "PJ",
       isFirstProperty: true,
     });
-    // Base 10.5% + PJ 0.5% - 1st 0.5% = 10.5%
+    // Base 11% - 1st 0.5% = 10.5%
     expect(result.rate).toBeCloseTo(0.105);
+  });
+
+  it("MCMV Faixa 4 does not apply for property above R$500k", () => {
+    const result = estimateFinancingRate({
+      monthlyIncome: 10_000,
+      propertyValue: 550_000,
+      employmentType: "CLT",
+      isFirstProperty: true,
+    });
+    expect(result.description).not.toContain("MCMV");
+    expect(result.description).toContain("SBPE");
   });
 });

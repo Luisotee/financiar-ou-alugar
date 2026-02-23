@@ -62,8 +62,9 @@ describe("netInvestmentValue", () => {
     // Average holding = 60 months = 1800 days → 15% IR
     const gain = 100_000;
     const irTax = gain * 0.15;
-    // Custody fee on balance above R$10k
-    const custodyFee = (200_000 - 10_000) * 0.002 * (120 / 12);
+    // Custody fee on full balance (no exemption for IPCA+), using avg balance
+    const avgBalance = (100_000 + 200_000) / 2;
+    const custodyFee = avgBalance * 0.002 * (120 / 12);
     const expected = 200_000 - irTax - custodyFee;
     expect(netInvestmentValue(state)).toBeCloseTo(expected, 0);
   });

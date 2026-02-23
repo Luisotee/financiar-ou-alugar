@@ -26,7 +26,17 @@
       "WebFetch(domain:meutudo.com.br)",
       "WebFetch(domain:www.juliomartins.net)",
       "WebFetch(domain:agenciabrasil.ebc.com.br)",
-      "WebFetch(domain:borainvestir.b3.com.br)"
+      "WebFetch(domain:borainvestir.b3.com.br)",
+      "Bash(node -e:*)",
+      "Bash(npx tsx:*)",
+      "Skill(claude-md-management:revise-claude-md)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_serena_serena__list_dir",
+      "Bash(pnpm lint:*)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_click"
     ]
   }
 }

@@ -51,11 +51,8 @@ function scenarioYearlyTable(
   const rows = scenario.yearlySnapshots.map((snap) => {
     const d = (v: number) => deflate(v, snap, showRealValues);
 
-    const monthlyCost = isRent
-      ? snap.rentPaid + snap.condominioPayment + snap.iptuPayment
-      : isFinance
-        ? snap.mortgagePayment + snap.condominioPayment + snap.iptuPayment
-        : snap.condominioPayment + snap.iptuPayment;
+    const monthlyCost =
+      snap.rentPaid + snap.mortgagePayment + snap.condominioPayment + snap.iptuPayment;
 
     const cells: string[] = [
       String(snap.year),
@@ -116,15 +113,16 @@ export function exportMarkdown(
   lines.push("");
 
   // ─── Context ───────────────────────────────────────────────
-  lines.push(`- **Capital inicial equivalente:** ${formatBRL(results.startingCapital)}`);
-  lines.push(`- **Orçamento mensal equalizado:** ${formatBRL(results.monthlyBudget)}/mês`);
+  lines.push(`- **Capital atual:** ${formatBRL(results.startingCapital)}`);
+  lines.push(`- **Poupança mensal:** ${formatBRL(results.monthlySavings)}/mês`);
+  lines.push(`- **Orçamento mensal:** ${formatBRL(results.monthlyBudget)}/mês`);
   lines.push("");
 
   // ─── Summary table ─────────────────────────────────────────
   lines.push(`## Resumo por Cenário`);
   lines.push("");
 
-  const summaryHeaders = ["Cenário", "Patrimônio Final", "Gasto Total", "Custo Mensal Médio", "Juros Pagos", "Custos Iniciais"];
+  const summaryHeaders = ["Cenário", "Patrimônio Final", "Gasto Total", "Custo Mensal Médio", "Juros Pagos", "Custos Iniciais", "Poupança"];
   const summaryRows = scenarios.map((s) => [
     s.label,
     formatBRL(showRealValues ? s.finalWealthReal : s.finalWealth),
@@ -132,6 +130,7 @@ export function exportMarkdown(
     formatBRL(showRealValues ? s.effectiveMonthlyAvgCostReal : s.effectiveMonthlyAvgCost),
     s.totalInterestPaid > 0 ? formatBRL(s.totalInterestPaid) : "—",
     formatBRL(s.upfrontCost),
+    s.savingsPhaseMonths > 0 ? `${Math.floor(s.savingsPhaseMonths / 12)}a ${s.savingsPhaseMonths % 12}m` : "—",
   ]);
   lines.push(markdownTable(summaryHeaders, summaryRows));
   lines.push("");
@@ -173,6 +172,11 @@ export function exportMarkdown(
   lines.push("");
 
   const inputRows: [string, string][] = [
+    ["**Sua Situação Atual**", ""],
+    ["Capital disponível", formatBRL(inputs.currentCapital)],
+    ["Aluguel atual", formatBRL(inputs.currentRent)],
+    ["Poupança mensal", formatBRL(inputs.monthlySavings)],
+    ["", ""],
     ["**Imóvel**", ""],
     ["Valor do imóvel", formatBRL(inputs.propertyValue)],
     ["Valorização anual", formatPercent(inputs.propertyAppreciationRate)],

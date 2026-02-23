@@ -34,12 +34,11 @@ export function netInvestmentValue(state: InvestmentState): number {
   const avgHoldingDays = (state.months / 2) * 30;
   const irRate = getIRRate(avgHoldingDays);
 
-  // B3 custody fee: 0.2%/year on balance above R$10,000
+  // B3 custody fee: 0.2%/year on full balance (exemption only applies to Tesouro Selic)
+  // Use average balance as approximation since fee accrues daily on current balance
   const custodyFeeAnnual = 0.002;
-  const custodyFee =
-    Math.max(0, state.grossBalance - 10_000) *
-    custodyFeeAnnual *
-    (state.months / 12);
+  const avgBalance = (state.totalContributed + state.grossBalance) / 2;
+  const custodyFee = avgBalance * custodyFeeAnnual * (state.months / 12);
 
   const taxOnGains = grossGain * irRate;
   return state.grossBalance - taxOnGains - custodyFee;

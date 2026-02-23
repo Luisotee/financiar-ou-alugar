@@ -4,7 +4,7 @@
 
 ```bash
 pnpm dev            # Dev server (port 3000)
-pnpm test           # Run all tests (vitest, 100 tests)
+pnpm test           # Run all tests (vitest, 133 tests)
 pnpm test:watch     # Watch mode
 pnpm lint           # ESLint
 pnpm build          # Production build (not needed during development)
@@ -17,9 +17,10 @@ npx tsc --noEmit    # Type check without emitting (useful after big changes)
 ```
 src/engine/        Pure financial calculation engine (no React, fully testable)
   simulator.ts       Orchestrates 3 scenarios → SimulationResults
-  scenario-rent.ts   Renter invests capital in Tesouro IPCA+
-  scenario-buy-cash.ts  Cash buyer: discount + invest savings
-  scenario-finance.ts   Mortgage: property + investments - debt
+  savings-phase.ts   Shared savings phase: accumulate capital while paying rent
+  scenario-rent.ts   Renter invests currentCapital in Tesouro IPCA+
+  scenario-buy-cash.ts  Savings phase → cash purchase with discount
+  scenario-finance.ts   Savings phase → mortgage: property + investments - debt
   rate-estimator.ts  MCMV + SBPE rate suggestion from buyer profile
   city-defaults.ts   Per-city defaults (IPTU, appreciation, ITBI, rent-to-price)
   amortization.ts    SAC & Price amortization schedules
@@ -79,18 +80,21 @@ tests/engine/      Vitest tests for the financial engine only
 - IR regressiva on investments: 22.5% (≤180d) → 15% (>720d)
 - Nominal to real deflation: `value / (1 + ipca_monthly)^months`
 - Capital gains tax: exempt if sale ≤ R$440k and only property
-- Investment model: Tesouro IPCA+ with B3 custody fee (0.2%/yr on balance > R$10k)
+- Investment model: Tesouro IPCA+ with B3 custody fee (0.2%/yr on avg balance; no R$10k exemption — that's Selic-only)
 - Cash discount: cash buyer pays `propertyValue * (1 - cashDiscountPercent)`, invests savings
 - IPTU calculated from rate: `propertyValue * iptuRate` (not a fixed amount)
-- Rate estimation: `estimateFinancingRate()` suggests rate from income/CLT-PJ/first-property
+- Nominal rate composition: ALWAYS use multiplicative `(1+real)*(1+inflation)-1`, never additive `real+inflation`. See `monthlyGrossRate()` in investment.ts as the reference pattern.
+- Rate estimation: `estimateFinancingRate()` suggests rate from MCMV (4 faixas) or SBPE with CLT/PJ/first-property discounts
 - Finance scenario tracks `totalInterestPaid` (sum of all interest from amortization)
-- Monthly budget equalization: `simulator.ts` computes `monthlyBudget` = max(first-month housing cost across all 3 scenarios). Each scenario invests `surplus = budget - monthlyCost` monthly via `advanceInvestment()`. Budget grows with IPCA annually (represents salary keeping pace with inflation).
+- Savings phase: buy scenarios call `calculateSavingsPhase()` to accumulate capital while paying `currentRent` (adjusted by `rentAdjustmentRate`). Phase ends when `netInvestmentValue >= target`. Rent scenario has no savings phase.
+- Monthly budget: `max(currentRent + monthlySavings, rentFirstMonth)`. Each scenario invests `surplus = budget - monthlyCost` monthly via `advanceInvestment()`. Budget grows with IPCA annually.
 - Escritura (notary deed) is only charged to cash purchase; financing uses bank contract instead. `taxaAvaliacao` (bank appraisal) is financing-only.
 - Purchase costs are percentage-based: `escrituraRate` (~0.8%), `registroRate` (~0.8%), `itbiRate` (~3%) — all proportional to property value
 - City defaults: `CITY_DEFAULTS` in `city-defaults.ts` — 13 cities with IPTU/ITBI/appreciation/rentToPrice
-- City selector batch-updates 4 fields on change; "Personalizado" disables auto-fill
+- City selector batch-updates 5 fields on change (IPTU, appreciation, ITBI, rent, rentAdjustment); "Personalizado" disables auto-fill
 - Changing `propertyValue` with a city selected auto-recalculates `monthlyRent` via `useEffect`
 - Rate estimator uses `useRef(prevSuggestion)` to auto-update `financingRate` only if user hasn't manually overridden it
+- `monthlySavings` auto-suggest: `(monthlyIncome - currentRent) * 30%`, same `useRef` pattern for manual override detection
 
 ## Gotchas
 
@@ -102,9 +106,10 @@ tests/engine/      Vitest tests for the financial engine only
 - Port 3000 may conflict locally — use `pnpm dev --port 3001` if needed
 - Root layout + page are server components; all interactive components use `"use client"`
 - Default theme is dark (`next-themes` with `enableSystem={false}`)
+- Hardcoded market data (MCMV brackets, SBPE rate, SELIC, IPCA, Tesouro spread, IGP-M in `constants.ts` and `rate-estimator.ts`) needs periodic review against current BCB/FipeZAP data
 
 ## Testing
 
-- Engine tests only: `tests/engine/*.test.ts` (6 files, 100 tests)
+- Engine tests only: `tests/engine/*.test.ts` (7 files, 133 tests)
 - Tests use `DEFAULT_INPUTS` from `@/engine/constants` as baseline
 - No UI component tests yet

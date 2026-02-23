@@ -34,7 +34,7 @@ export const DEFAULT_INPUTS: SimulationInputs = {
   cashDiscountPercent: 0.1,
 
   downPaymentPercent: 0.2,
-  financingRate: 0.0999,
+  financingRate: 0.1,
   financingTermYears: 30,
   amortizationType: "SAC",
   useFGTS: false,
@@ -56,6 +56,10 @@ export const DEFAULT_INPUTS: SimulationInputs = {
   ipcaRate: 0.045,
   tesouroSpread: 0.07,
   igpmRate: 0.035,
+
+  currentCapital: 0,
+  currentRent: 0,
+  monthlySavings: 3_000,
 
   monthlyIncome: 10_000,
   employmentType: "CLT",

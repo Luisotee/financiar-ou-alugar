@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import type { SimulationResults, ScenarioResult } from "@/engine/types";
 import { formatBRL, formatBRLCompact } from "@/engine/formatters";
 import { cn } from "@/lib/utils";
@@ -62,22 +61,25 @@ interface SummaryCardsProps {
 function ScenarioCard({
   scenario,
   isWinner,
-  colorClass,
+  ringClass,
+  glowClass,
   icon,
   showRealValues,
 }: {
   scenario: ScenarioResult;
   isWinner: boolean;
-  colorClass: string;
+  ringClass: string;
+  glowClass: string;
   icon: string;
   showRealValues: boolean;
 }) {
   return (
-    <Card
+    <div
       className={cn(
-        "relative overflow-hidden transition-all",
+        "glass-card relative overflow-hidden p-5 transition-all",
         isWinner && "ring-2 ring-offset-2 ring-offset-background",
-        isWinner && colorClass
+        isWinner && ringClass,
+        isWinner && glowClass
       )}
     >
       {isWinner && (
@@ -85,69 +87,82 @@ function ScenarioCard({
           MELHOR
         </div>
       )}
-      <CardContent className="pt-5">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="text-lg">{icon}</span>
-          <h3 className="font-semibold">{scenario.label}</h3>
+
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-lg">{icon}</span>
+        <h3 className="font-semibold">{scenario.label}</h3>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <p className="text-2xl font-bold tracking-tight">
+            {formatBRL(showRealValues ? scenario.finalWealthReal : scenario.finalWealth)}
+          </p>
+          <p className="text-xs text-muted-foreground">Patrimônio Final</p>
+          <WealthBreakdown scenario={scenario} showRealValues={showRealValues} />
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <p className="text-2xl font-bold tracking-tight">
-              {formatBRL(showRealValues ? scenario.finalWealthReal : scenario.finalWealth)}
+            <p className="font-medium">{formatBRL(showRealValues ? scenario.totalSpentReal : scenario.totalSpent)}</p>
+            <p className="text-xs text-muted-foreground">Gasto Total</p>
+          </div>
+          <div>
+            <p className="font-medium">
+              {formatBRL(showRealValues ? scenario.effectiveMonthlyAvgCostReal : scenario.effectiveMonthlyAvgCost)}
             </p>
-            <p className="text-xs text-muted-foreground">Patrimônio Final</p>
-            <WealthBreakdown scenario={scenario} showRealValues={showRealValues} />
+            <p className="text-xs text-muted-foreground">Custo Mensal Médio</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <p className="font-medium">{formatBRL(showRealValues ? scenario.totalSpentReal : scenario.totalSpent)}</p>
-              <p className="text-xs text-muted-foreground">Gasto Total</p>
-            </div>
-            <div>
-              <p className="font-medium">
-                {formatBRL(showRealValues ? scenario.effectiveMonthlyAvgCostReal : scenario.effectiveMonthlyAvgCost)}
-              </p>
-              <p className="text-xs text-muted-foreground">Custo Mensal Médio</p>
-            </div>
-          </div>
-
-          {scenario.totalInterestPaid > 0 && (
-            <div className="border-t border-border/50 pt-2 text-sm">
-              <p className="font-medium text-destructive">
-                {formatBRL(scenario.totalInterestPaid)}
-              </p>
-              <p className="text-xs text-muted-foreground">Total de Juros Pagos</p>
-            </div>
-          )}
         </div>
-      </CardContent>
-    </Card>
+
+        {scenario.totalInterestPaid > 0 && (
+          <div className="border-t border-border/50 pt-2 text-sm">
+            <p className="font-medium text-destructive">
+              {formatBRL(scenario.totalInterestPaid)}
+            </p>
+            <p className="text-xs text-muted-foreground">Total de Juros Pagos</p>
+          </div>
+        )}
+
+        {scenario.savingsPhaseMonths > 0 && (
+          <div className="border-t border-border/50 pt-2 text-sm">
+            <p className="font-medium">
+              {Math.floor(scenario.savingsPhaseMonths / 12) > 0
+                ? `${Math.floor(scenario.savingsPhaseMonths / 12)}a ${scenario.savingsPhaseMonths % 12}m`
+                : `${scenario.savingsPhaseMonths} meses`}
+            </p>
+            <p className="text-xs text-muted-foreground">Fase de Poupança</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 export function SummaryCards({ results, showRealValues }: SummaryCardsProps) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="space-y-4">
       <ScenarioCard
         scenario={results.rent}
         isWinner={results.winner === "ALUGAR"}
-        colorClass="ring-scenario-rent"
+        ringClass="ring-scenario-rent"
+        glowClass="glass-card-glow-rent"
         icon="🏠"
         showRealValues={showRealValues}
       />
       <ScenarioCard
         scenario={results.buyCash}
         isWinner={results.winner === "COMPRAR_VISTA"}
-        colorClass="ring-scenario-buy"
+        ringClass="ring-scenario-buy"
+        glowClass="glass-card-glow-buy"
         icon="💰"
         showRealValues={showRealValues}
       />
       <ScenarioCard
         scenario={results.finance}
         isWinner={results.winner === "FINANCIAR"}
-        colorClass="ring-scenario-finance"
+        ringClass="ring-scenario-finance"
+        glowClass="glass-card-glow-finance"
         icon="🏦"
         showRealValues={showRealValues}
       />

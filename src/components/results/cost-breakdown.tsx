@@ -10,7 +10,6 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SimulationResults, ScenarioResult } from "@/engine/types";
 import { formatBRLCompact } from "@/engine/formatters";
 
@@ -69,59 +68,55 @@ export function CostBreakdown({ results }: CostBreakdownProps) {
   }, [results]);
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Destino dos Gastos</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={costConfig} className="h-[200px] w-full">
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} horizontal={false} />
-            <XAxis
-              type="number"
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v) => formatBRLCompact(v)}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              type="category"
-              dataKey="scenario"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 11 }}
-              width={110}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => (
-                    <span>
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                        maximumFractionDigits: 0,
-                      }).format(value as number)}
-                    </span>
-                  )}
-                />
-              }
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="upfront" stackId="costs" fill="oklch(0.65 0.12 30)" radius={0} />
-            <Bar dataKey="rent" stackId="costs" fill="oklch(0.7 0.15 195)" radius={0} />
-            <Bar dataKey="interest" stackId="costs" fill="oklch(0.6 0.2 25)" radius={0} />
-            <Bar dataKey="principal" stackId="costs" fill="oklch(0.7 0.12 250)" radius={0} />
-            <Bar dataKey="condominio" stackId="costs" fill="oklch(0.7 0.12 140)" radius={0} />
-            <Bar dataKey="iptu" stackId="costs" fill="oklch(0.65 0.1 80)" radius={0} />
-            <Bar dataKey="insurance" stackId="costs" fill="oklch(0.7 0.08 310)" radius={0} />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <div className="glass-card p-5">
+      <h3 className="mb-3 text-lg font-semibold">Destino dos Gastos</h3>
+      <ChartContainer config={costConfig} className="h-[200px] w-full">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} horizontal={false} />
+          <XAxis
+            type="number"
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v) => formatBRLCompact(v)}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            type="category"
+            dataKey="scenario"
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 11 }}
+            width={110}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value) => (
+                  <span>
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                      maximumFractionDigits: 0,
+                    }).format(value as number)}
+                  </span>
+                )}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          <Bar dataKey="upfront" stackId="costs" fill="oklch(0.65 0.12 30)" radius={0} />
+          <Bar dataKey="rent" stackId="costs" fill="oklch(0.7 0.15 195)" radius={0} />
+          <Bar dataKey="interest" stackId="costs" fill="oklch(0.6 0.2 25)" radius={0} />
+          <Bar dataKey="principal" stackId="costs" fill="oklch(0.7 0.12 250)" radius={0} />
+          <Bar dataKey="condominio" stackId="costs" fill="oklch(0.7 0.12 140)" radius={0} />
+          <Bar dataKey="iptu" stackId="costs" fill="oklch(0.65 0.1 80)" radius={0} />
+          <Bar dataKey="insurance" stackId="costs" fill="oklch(0.7 0.08 310)" radius={0} />
+        </BarChart>
+      </ChartContainer>
+    </div>
   );
 }

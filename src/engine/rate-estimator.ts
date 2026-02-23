@@ -1,15 +1,16 @@
-// ─── MCMV BRACKETS ──────────────────────────────────────────
+// ─── MCMV BRACKETS (updated Feb/2026) ───────────────────────
 const MCMV_BRACKETS = [
-  { maxIncome: 2_640, maxProperty: 264_000, rate: 0.0425 },
-  { maxIncome: 4_400, maxProperty: 264_000, rate: 0.06 },
-  { maxIncome: 8_000, maxProperty: 350_000, rate: 0.0766 },
+  { maxIncome: 2_850, maxProperty: 270_000, rate: 0.05 },
+  { maxIncome: 4_700, maxProperty: 270_000, rate: 0.0816 },
+  { maxIncome: 8_600, maxProperty: 350_000, rate: 0.1025 },
+  { maxIncome: 12_000, maxProperty: 500_000, rate: 0.105 },
 ] as const;
 
 // ─── SBPE BASE RATES ────────────────────────────────────────
-const SBPE_BASE_RATE = 0.105;
+const SBPE_BASE_RATE = 0.11;
 const CLT_DISCOUNT = 0.005;
 const FIRST_PROPERTY_DISCOUNT = 0.005;
-const PJ_PREMIUM = 0.005;
+const PJ_PREMIUM = 0;
 
 export interface RateEstimation {
   rate: number;

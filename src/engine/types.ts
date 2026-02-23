@@ -41,6 +41,11 @@ export interface SimulationInputs {
   tesouroSpread: number; // IPCA+ spread
   igpmRate: number;
 
+  // Current financial situation
+  currentCapital: number; // Capital available today
+  currentRent: number; // Rent paid today (0 if living with parents)
+  monthlySavings: number; // Monthly savings capacity
+
   // Buyer Profile (for rate estimation)
   monthlyIncome: number;
   employmentType: "CLT" | "PJ";
@@ -96,6 +101,7 @@ export interface ScenarioResult {
   effectiveMonthlyAvgCostReal: number;
   totalInterestPaid: number;
   upfrontCost: number;
+  savingsPhaseMonths: number;
 }
 
 export interface SimulationResults {
@@ -108,6 +114,7 @@ export interface SimulationResults {
   chartData: ChartDataPoint[];
   startingCapital: number;
   monthlyBudget: number;
+  monthlySavings: number;
 }
 
 export interface ChartDataPoint {

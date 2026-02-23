@@ -1,6 +1,7 @@
 import type { SimulationInputs, ScenarioResult, MonthlySnapshot, InvestmentState } from "./types";
 import { calculateCapitalGainsTax } from "./taxes";
 import { monthlyGrossRate, advanceInvestment, netInvestmentValue } from "./investment";
+import { calculateSavingsPhase } from "./savings-phase";
 
 export function calculateBuyCashScenario(
   inputs: SimulationInputs,
@@ -15,20 +16,53 @@ export function calculateBuyCashScenario(
   const registro = effectivePrice * inputs.registroRate;
   const upfrontCost = effectivePrice + itbiCost + escritura + registro;
 
-  // Total capital = what a full-price buyer would spend (fair comparison base)
-  const totalCapital =
-    inputs.propertyValue +
-    inputs.propertyValue * inputs.itbiRate +
-    inputs.propertyValue * inputs.escrituraRate +
-    inputs.propertyValue * inputs.registroRate;
-
-  // Savings from discount are invested
-  const investmentSeed = totalCapital - upfrontCost;
-
   const investmentRate = monthlyGrossRate(inputs.ipcaRate, inputs.tesouroSpread);
+
+  // ─── SAVINGS PHASE ──────────────────────────────────────────
+  const savingsResult = calculateSavingsPhase(
+    inputs.currentCapital,
+    inputs.currentRent,
+    monthlyBudget,
+    upfrontCost,
+    investmentRate,
+    inputs.ipcaRate,
+    totalMonths,
+    inputs.rentAdjustmentRate,
+  );
+
+  const savingsMonths = savingsResult.months;
+  const remainingMonths = totalMonths - savingsMonths;
+
+  // If never reached target, return savings-only result
+  if (remainingMonths <= 0) {
+    const last = savingsResult.snapshots[savingsResult.snapshots.length - 1];
+    const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
+
+    return {
+      name: "COMPRAR_VISTA",
+      label: "Comprar à Vista",
+      monthlySnapshots: savingsResult.snapshots,
+      yearlySnapshots: savingsResult.snapshots.filter((s) => s.month % 12 === 0),
+      finalWealth: last.totalWealth,
+      finalWealthReal: last.totalWealthReal,
+      totalSpent: last.totalSpent,
+      totalSpentReal: last.totalSpent / deflator,
+      effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
+      effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
+      totalInterestPaid: 0,
+      upfrontCost: 0,
+      savingsPhaseMonths: savingsMonths,
+    };
+  }
+
+  // ─── OWNERSHIP PHASE ────────────────────────────────────────
+  // Capital after buying: whatever's left from savings minus purchase costs
+  const capitalAtPurchase = netInvestmentValue(savingsResult.finalInvestment);
+  const investmentSeed = capitalAtPurchase - upfrontCost;
+
   let investment: InvestmentState = {
-    grossBalance: investmentSeed,
-    totalContributed: investmentSeed,
+    grossBalance: Math.max(0, investmentSeed),
+    totalContributed: Math.max(0, investmentSeed),
     months: 0,
   };
 
@@ -36,16 +70,32 @@ export function calculateBuyCashScenario(
   let currentCondominio = inputs.condominioMonthly;
   let currentIptuAnnual = inputs.propertyValue * inputs.iptuRate;
   let currentBudget = monthlyBudget;
-  let totalSpent = upfrontCost;
-  const snapshots: MonthlySnapshot[] = [];
+  let totalSpent = savingsResult.totalRentPaid + upfrontCost;
 
-  // Nominal appreciation = real + inflation compounded
+  // Advance budget/costs to the year of purchase
+  const yearsElapsed = Math.floor(savingsMonths / 12);
+  for (let y = 0; y < yearsElapsed; y++) {
+    currentCondominio *= 1 + inputs.igpmRate;
+    currentIptuAnnual *= 1 + inputs.ipcaRate;
+    currentBudget *= 1 + inputs.ipcaRate;
+  }
+
+  // Nominal appreciation = (1 + real) × (1 + inflation) - 1, compounded monthly
   const monthlyAppreciation =
-    Math.pow(1 + inputs.propertyAppreciationRate + inputs.ipcaRate, 1 / 12) - 1;
+    Math.pow((1 + inputs.propertyAppreciationRate) * (1 + inputs.ipcaRate), 1 / 12) - 1;
 
-  for (let m = 1; m <= totalMonths; m++) {
-    // Annual adjustments
-    if (m > 1 && (m - 1) % 12 === 0) {
+  // Appreciate property through savings phase months
+  for (let m = 0; m < savingsMonths; m++) {
+    currentPropertyValue *= 1 + monthlyAppreciation;
+  }
+
+  const ownershipSnapshots: MonthlySnapshot[] = [];
+
+  for (let m = 1; m <= remainingMonths; m++) {
+    const absoluteMonth = savingsMonths + m;
+
+    // Annual adjustments (relative to absolute timeline)
+    if (absoluteMonth > 1 && (absoluteMonth - 1) % 12 === 0) {
       currentCondominio *= 1 + inputs.igpmRate;
       currentIptuAnnual *= 1 + inputs.ipcaRate;
       currentBudget *= 1 + inputs.ipcaRate;
@@ -65,15 +115,16 @@ export function calculateBuyCashScenario(
     const nominalGain = currentPropertyValue - inputs.propertyValue;
     const capitalGainsTax = calculateCapitalGainsTax(
       nominalGain,
-      currentPropertyValue
+      currentPropertyValue,
+      true, // Simulator only models one property — always the sole property
     );
     const netInvestment = netInvestmentValue(investment);
     const netWealth = currentPropertyValue - capitalGainsTax + netInvestment;
-    const deflator = Math.pow(1 + inputs.ipcaRate / 12, m);
+    const deflator = Math.pow(1 + inputs.ipcaRate / 12, absoluteMonth);
 
-    snapshots.push({
-      month: m,
-      year: Math.ceil(m / 12),
+    ownershipSnapshots.push({
+      month: absoluteMonth,
+      year: Math.ceil(absoluteMonth / 12),
       rentPaid: 0,
       mortgagePayment: 0,
       principalPaid: 0,
@@ -91,14 +142,16 @@ export function calculateBuyCashScenario(
     });
   }
 
-  const last = snapshots[snapshots.length - 1];
+  // Compose: savings snapshots + ownership snapshots
+  const allSnapshots = [...savingsResult.snapshots, ...ownershipSnapshots];
+  const last = allSnapshots[allSnapshots.length - 1];
   const deflator = Math.pow(1 + inputs.ipcaRate / 12, totalMonths);
 
   return {
     name: "COMPRAR_VISTA",
     label: "Comprar à Vista",
-    monthlySnapshots: snapshots,
-    yearlySnapshots: snapshots.filter((s) => s.month % 12 === 0),
+    monthlySnapshots: allSnapshots,
+    yearlySnapshots: allSnapshots.filter((s) => s.month % 12 === 0),
     finalWealth: last.totalWealth,
     finalWealthReal: last.totalWealthReal,
     totalSpent: last.totalSpent,
@@ -106,6 +159,7 @@ export function calculateBuyCashScenario(
     effectiveMonthlyAvgCost: last.totalSpent / totalMonths,
     effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
     totalInterestPaid: 0,
-    upfrontCost: upfrontCost,
+    upfrontCost,
+    savingsPhaseMonths: savingsMonths,
   };
 }

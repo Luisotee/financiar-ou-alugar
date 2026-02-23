@@ -2,7 +2,6 @@ import type { SimulationInputs, SimulationResults, ChartDataPoint } from "./type
 import { calculateRentScenario } from "./scenario-rent";
 import { calculateBuyCashScenario } from "./scenario-buy-cash";
 import { calculateFinanceScenario } from "./scenario-finance";
-import { generateSACSchedule, generatePriceSchedule } from "./amortization";
 
 const LABELS: Record<string, string> = {
   ALUGAR: "Alugar",
@@ -11,29 +10,9 @@ const LABELS: Record<string, string> = {
 };
 
 export function runSimulation(inputs: SimulationInputs): SimulationResults {
-  // Compute monthly budget = max first-month cost across all 3 scenarios
-  const iptuMonthly = inputs.propertyValue * inputs.iptuRate / 12;
-  const rentFirstMonth =
-    inputs.monthlyRent + inputs.condominioMonthly + iptuMonthly + inputs.renterInsuranceMonthly;
-  const cashFirstMonth = inputs.condominioMonthly + iptuMonthly;
-
-  const downPayment = inputs.propertyValue * inputs.downPaymentPercent;
-  const fgts = inputs.useFGTS ? inputs.fgtsAmount : 0;
-  const loanAmount = Math.max(0, inputs.propertyValue - downPayment - fgts);
-  const financingMonths = inputs.financingTermYears * 12;
-  const tempSchedule =
-    inputs.amortizationType === "SAC"
-      ? generateSACSchedule(
-          loanAmount, inputs.financingRate, financingMonths,
-          inputs.propertyValue, inputs.mipRate, inputs.dfiRate, inputs.taxaAdministracao
-        )
-      : generatePriceSchedule(
-          loanAmount, inputs.financingRate, financingMonths,
-          inputs.propertyValue, inputs.mipRate, inputs.dfiRate, inputs.taxaAdministracao
-        );
-  const financeFirstMonth = (tempSchedule[0]?.payment ?? 0) + cashFirstMonth;
-
-  const monthlyBudget = Math.max(rentFirstMonth, cashFirstMonth, financeFirstMonth);
+  // Monthly budget = what the person can actually spend on housing + investing.
+  // If rent exceeds budget, surplus goes negative (renter disinvests to cover housing).
+  const monthlyBudget = inputs.currentRent + inputs.monthlySavings;
 
   const rent = calculateRentScenario(inputs, monthlyBudget);
   const buyCash = calculateBuyCashScenario(inputs, monthlyBudget);
@@ -54,18 +33,14 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
   // Build chart data (yearly snapshots)
   const chartData: ChartDataPoint[] = [];
 
-  // Year 0: starting point
-  const startingCapital =
-    inputs.propertyValue +
-    inputs.propertyValue * inputs.itbiRate +
-    inputs.propertyValue * inputs.escrituraRate +
-    inputs.propertyValue * inputs.registroRate;
+  // Year 0: starting point = current capital for all scenarios
+  const startingCapital = inputs.currentCapital;
 
   chartData.push({
     year: 0,
     alugar: startingCapital,
-    comprarVista: inputs.propertyValue,
-    financiar: inputs.propertyValue,
+    comprarVista: startingCapital,
+    financiar: startingCapital,
   });
 
   for (let y = 1; y <= inputs.timeHorizonYears; y++) {
@@ -90,5 +65,6 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
     chartData,
     startingCapital,
     monthlyBudget,
+    monthlySavings: inputs.monthlySavings,
   };
 }

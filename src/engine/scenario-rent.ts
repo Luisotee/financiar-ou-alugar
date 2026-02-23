@@ -6,14 +6,8 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
   const totalMonths = inputs.timeHorizonYears * 12;
   const rate = monthlyGrossRate(inputs.ipcaRate, inputs.tesouroSpread);
 
-  // The renter invests what a cash buyer would spend upfront
-  const escritura = inputs.propertyValue * inputs.escrituraRate;
-  const registro = inputs.propertyValue * inputs.registroRate;
-  const initialInvestment =
-    inputs.propertyValue +
-    inputs.propertyValue * inputs.itbiRate +
-    escritura +
-    registro;
+  // The renter invests their current capital
+  const initialInvestment = inputs.currentCapital;
 
   let investment: InvestmentState = {
     grossBalance: initialInvestment,
@@ -60,7 +54,7 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
       mortgagePayment: 0,
       principalPaid: 0,
       interestPaid: 0,
-      insurancePaid: 0,
+      insurancePaid: inputs.renterInsuranceMonthly,
       condominioPayment: currentCondominio,
       iptuPayment: monthlyIptu,
       investmentBalance: netWealth,
@@ -89,5 +83,6 @@ export function calculateRentScenario(inputs: SimulationInputs, monthlyBudget: n
     effectiveMonthlyAvgCostReal: last.totalSpent / deflator / totalMonths,
     totalInterestPaid: 0,
     upfrontCost: 0,
+    savingsPhaseMonths: 0,
   };
 }
